@@ -176,7 +176,6 @@ void *PThread_v1_func(void *rank)
         for (i = segment_size * thread_rank; i < num_elements; i++)
         {
             ssd += (new_x->elements[i] - x->elements[i]) * (new_x->elements[i] - x->elements[i]);
-            x->elements[i] = new_x->elements[i];
         }
         num_iter++;
         ssd_mat[thread_rank] = ssd;
@@ -318,7 +317,6 @@ void *PThread_v2_func(void *rank)
         for (i = thread_rank; i < num_elements; i += threads)
         {
             ssd += (new_x->elements[i] - x->elements[i]) * (new_x->elements[i] - x->elements[i]);
-            x->elements[i] = new_x->elements[i];
         }
         num_iter++;
         ssd_mat[thread_rank] = ssd;
