@@ -105,7 +105,7 @@ struct Pthread_v1_args
      * Struct used to store task data for use by the chunking threads. Each thread gets
      * the same instance of this struct.
      */
-    matrix_t a;
+    matrix_t *a;
     int num_elements;
     long num_threads;
     int done;
@@ -124,7 +124,7 @@ void *PThread_v1_func(void *rank)
      * Function that runs in each chunking thread.
      */
     long thread_rank = (long)rank; //This is the nth thread
-    matrix_t a = p_v1_args.a;
+    matrix_t *a = p_v1_args.a;
     int num_elements = p_v1_args.num_elements;
     long threads = p_v1_args.num_threads;
     matrix_t *x1 = p_v1_args.x1;
@@ -135,10 +135,14 @@ void *PThread_v1_func(void *rank)
 
     int max_iter = p_v1_args.max_iter;
     int i, j;
-    int num_cols = a.num_columns;
+    int num_cols = a->num_columns;
 
     /* Initialize current jacobi solution. */
-    for (i = segment_size * thread_rank; i < num_elements; i++)
+    int end = segment_size * (thread_rank+1);
+    if (thread_rank == threads-1) {
+        end = num_elements;
+    }
+    for (i = segment_size * thread_rank; i < end; i++)
     {
         x1->elements[i] = b.elements[i];
     }
@@ -159,21 +163,21 @@ void *PThread_v1_func(void *rank)
             x = x2;
             new_x = x1;
         }
-        for (i = segment_size * thread_rank; i < num_elements; i++)
+        for (i = segment_size * thread_rank; i < end; i++)
         {
 
             double sum = 0.0;
             for (j = 0; j < num_cols; j++)
             {
                 if (i != j)
-                    sum += a.elements[i * num_cols + j] * x->elements[j];
+                    sum += a->elements[i * num_cols + j] * x->elements[j];
             }
 
             /* Update values for the unkowns for the current row. */
-            new_x->elements[i] = (b.elements[i] - sum) / a.elements[i * num_cols + i];
+            new_x->elements[i] = (b.elements[i] - sum) / a->elements[i * num_cols + i];
         }
         ssd = 0.0;
-        for (i = segment_size * thread_rank; i < num_elements; i++)
+        for (i = segment_size * thread_rank; i < end; i++)
         {
             ssd += (new_x->elements[i] - x->elements[i]) * (new_x->elements[i] - x->elements[i]);
         }
@@ -192,6 +196,7 @@ void *PThread_v1_func(void *rank)
             {
                 p_v1_args.done = 1;
                 p_v1_args.target_mat = *new_x;
+                fprintf(stderr, "Iterations: %d\n", num_iter);
             }
         }
         pthread_barrier_wait(&barrier_v1);
@@ -211,7 +216,7 @@ void compute_using_pthreads_v1(const matrix_t A, matrix_t mt_sol_x_v1, const mat
     thread_handles = malloc(num_threads * sizeof(pthread_t));
 
     // Setup struct with all necessary information for thread
-    p_v1_args.a = A;
+    p_v1_args.a = &A;
     p_v1_args.num_elements = mt_sol_x_v1.num_rows;
     p_v1_args.num_threads = num_threads;
     p_v1_args.x1 = &mt_sol_x_v1;
@@ -248,7 +253,7 @@ struct Pthread_v2_args
      * Struct used to store task data for use by striding threads. Each thread gets
      * the same instance of this struct.
      */
-    matrix_t a;
+    matrix_t *a;
     int num_elements;
     long num_threads;
     int done;
@@ -267,7 +272,7 @@ void *PThread_v2_func(void *rank)
      * Function run by each striding thread
      */
     long thread_rank = (long)rank; //This is the nth thread
-    matrix_t a = p_v2_args.a;
+    matrix_t *a = p_v2_args.a;
     int num_elements = p_v2_args.num_elements;
     long threads = p_v2_args.num_threads;
     matrix_t *x1 = p_v2_args.x1;
@@ -277,7 +282,7 @@ void *PThread_v2_func(void *rank)
 
     int max_iter = p_v2_args.max_iter;
     int i, j;
-    int num_cols = a.num_columns;
+    int num_cols = a->num_columns;
 
     /* Initialize current jacobi solution. */
     for (i = thread_rank; i < num_elements; i += threads)
@@ -307,11 +312,11 @@ void *PThread_v2_func(void *rank)
             for (j = 0; j < num_cols; j++)
             {
                 if (i != j)
-                    sum += a.elements[i * num_cols + j] * x->elements[j];
+                    sum += a->elements[i * num_cols + j] * x->elements[j];
             }
 
             /* Update values for the unkowns for the current row. */
-            new_x->elements[i] = (b.elements[i] - sum) / a.elements[i * num_cols + i];
+            new_x->elements[i] = (b.elements[i] - sum) / a->elements[i * num_cols + i];
         }
         ssd = 0.0;
         for (i = thread_rank; i < num_elements; i += threads)
@@ -355,7 +360,7 @@ void compute_using_pthreads_v2(const matrix_t A, matrix_t mt_sol_x_v2, const mat
     thread_handles = malloc(num_threads * sizeof(pthread_t));
 
     // Setup struct with all necessary information for thread
-    p_v2_args.a = A;
+    p_v2_args.a = &A;
     p_v2_args.num_elements = mt_sol_x_v2.num_rows;
     p_v2_args.num_threads = num_threads;
     p_v2_args.x1 = &mt_sol_x_v2;
