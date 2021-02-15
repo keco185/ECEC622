@@ -100,8 +100,8 @@ int optimize_gold(char *function, int dim, int swarm_size,
     int g; 
     g = pso_solve_gold(function, swarm, xmax, xmin, max_iter);
     if (g >= 0) {
-        //fprintf(stderr, "Solution:\n");
-        //pso_print_particle(&swarm->particle[g]);
+        fprintf(stderr, "Solution:\n");
+        pso_print_particle(&swarm->particle[g]);
     }
 
     pso_free(swarm);

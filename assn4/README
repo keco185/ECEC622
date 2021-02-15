@@ -1,0 +1,14 @@
+This code can be compiled using 'make all'
+Run it with './pso <function> <dimensions> <swarm size> <xmin> <xmax> <iterations> <threads>'
+
+All changes required for the project were done in optimize_using_omp.c. This 
+includes rewriting any functions from pso_utils. Rewritten functions are 
+postpended with '_omp'.
+
+
+Built-in function choices:
+-"booth"
+-"rastrigin"
+-"holder_table"
+-"eggholder"
+-"schwefel"

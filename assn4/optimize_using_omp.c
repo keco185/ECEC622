@@ -1,8 +1,8 @@
 /* Implementation of PSO using OpenMP.
  *
- * Author: Naga Kandasamy
- * Date: February 5, 2021
- *
+ * Author: Kevin Connell, Casey Adams
+ * Date: February 14, 2021
+ * All code that needed to be edited is included in this file
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -182,8 +182,8 @@ int optimize_using_omp(char *function, int dim, int swarm_size,
     /* Solve PSO */
     int g = pso_solve_omp(function, swarm, xmax, xmin, max_iter, num_threads);
     if (g >= 0) {
-        //fprintf(stderr, "Solution:\n");
-        //pso_print_particle(&swarm->particle[g]);
+        fprintf(stderr, "Solution:\n");
+        pso_print_particle(&swarm->particle[g]);
     }
 
     pso_free(swarm);
